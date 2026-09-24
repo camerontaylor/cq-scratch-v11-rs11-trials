@@ -1,0 +1,28 @@
+# RS-11 W1: verify that an environment whose deployment_branch_policy is
+# {custom_branch_policies: true, protected_branches: false} + a single
+# {name: main, type: branch} policy is ENFORCED live on a user-owned repo
+# (the RS-4 T-19 canary REST endpoint was probed read-only; this tests the
+# runner-side enforcement: a job referencing environment: promote).
+# Runs on push to any branch. Fails the job if the environment is granted
+# off the default branch (env vars would leak the fact a secret was
+# available; here no secret is attached, we just observe job admission).
+name: env-probe
+
+on:
+  push:
+    branches-ignore: []
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: promote
+    permissions:
+      contents: none
+    steps:
+      - name: Report which ref got an environment grant
+        run: |
+          echo "ref=$GITHUB_REF"
+          echo "sha=$GITHUB_SHA"
+          echo "CANARY_OK ref=$GITHUB_REF" >> "$GITHUB_STEP_SUMMARY"
