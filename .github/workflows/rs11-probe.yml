@@ -59,6 +59,11 @@ jobs:
             -f 'labels[]=cq-override' \
             --jq '.[0]'
 
+      - name: checkout for push-main
+        if: inputs.action == 'push-main'
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0 (immutable pin)
+        with:
+          persist-credentials: false
       - name: push-main (GITHUB_TOKEN pushes a commit to main)
         if: inputs.action == 'push-main'
         env:
@@ -66,6 +71,7 @@ jobs:
         run: |
           git config user.email "actions-bot@example.invalid"
           git config user.name "rs11-probe-bot"
+          git remote set-url origin https://x-access-token:$GH_TOKEN@github.com/$GITHUB_REPOSITORY.git
           git fetch origin main
           git checkout -B main origin/main
           echo "probe $(date -u +%s%N)" >> probe-main.txt
