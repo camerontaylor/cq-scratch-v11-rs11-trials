@@ -30,7 +30,8 @@ jobs:
     steps:
       - name: create-check (GITHUB_TOKEN = Actions app, app.id 15368)
         if: inputs.action == 'create-check'
-        env: { GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} }
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh api --method POST repos/$GITHUB_REPOSITORY/check-runs \
             -f name='cq/probe' -f status=completed \
@@ -40,7 +41,8 @@ jobs:
 
       - name: status-only (commit status, same context name)
         if: inputs.action == 'status-only'
-        env: { GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} }
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh api --method POST repos/$GITHUB_REPOSITORY/statuses/${{ inputs.sha }} \
             -f state='success' -f context='cq/probe' \
@@ -49,7 +51,8 @@ jobs:
 
       - name: label-pr (GITHUB_TOKEN applies a label)
         if: inputs.action == 'label-pr'
-        env: { GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} }
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh api --method POST repos/$GITHUB_REPOSITORY/issues/${{ inputs.pr_number }}/labels \
             -f 'labels[]=cq-override' \
@@ -58,7 +61,8 @@ jobs:
       - name: push-main (GITHUB_TOKEN pushes a commit to main)
         if: inputs.action == 'push-main'
         permissions: { contents: write }
-        env: { GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} }
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.email "actions-bot@example.invalid"
           git config user.name "rs11-probe-bot"
