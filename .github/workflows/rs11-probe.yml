@@ -1,0 +1,70 @@
+# RS-11 W2/W4/W5 probe: dispatch-driven actions using GITHUB_TOKEN
+# (authenticates as the GitHub Actions app, app.id 15368).
+# input: action in {create-check, status-only, label-pr}
+name: rs11-probe
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'create-check | status-only | label-pr'
+        required: true
+      pr_number:
+        description: 'PR number (create-check/label-pr)'
+        required: false
+      sha:
+        description: 'Subject SHA (create-check/status-only)'
+        required: false
+
+permissions:
+  contents: read
+  checks: write
+  statuses: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: create-check (GITHUB_TOKEN = Actions app, app.id 15368)
+        if: inputs.action == 'create-check'
+        env: { GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} }
+        run: |
+          gh api --method POST repos/$GITHUB_REPOSITORY/check-runs \
+            -f name='cq/probe' -f status=completed \
+            -f conclusion=success -f head_sha='${{ inputs.sha }}' \
+            -f 'output={title: "probe check", summary: "GITHUB_TOKEN-created check run"}' \
+            --jq '{id, app: .app.id, name, conclusion, head_sha}'
+
+      - name: status-only (commit status, same context name)
+        if: inputs.action == 'status-only'
+        env: { GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} }
+        run: |
+          gh api --method POST repos/$GITHUB_REPOSITORY/statuses/${{ inputs.sha }} \
+            -f state='success' -f context='cq/probe' \
+            -f description='GITHUB_TOKEN-created commit status' \
+            --jq '{id, context, state, creator: .creator.login}'
+
+      - name: label-pr (GITHUB_TOKEN applies a label)
+        if: inputs.action == 'label-pr'
+        env: { GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} }
+        run: |
+          gh api --method POST repos/$GITHUB_REPOSITORY/issues/${{ inputs.pr_number }}/labels \
+            -f 'labels[]=cq-override' \
+            --jq '.[0]'
+
+      - name: push-main (GITHUB_TOKEN pushes a commit to main)
+        if: inputs.action == 'push-main'
+        permissions: { contents: write }
+        env: { GH_TOKEN: ${{ secrets.GITHUB_TOKEN }} }
+        run: |
+          git config user.email "actions-bot@example.invalid"
+          git config user.name "rs11-probe-bot"
+          git fetch origin main
+          git checkout -B main origin/main
+          echo "probe $(date -u +%s%N)" >> probe-main.txt
+          git add probe-main.txt
+          git commit -qm "rs11 W2-E: GITHUB_TOKEN push to main"
+          git push origin main 2>&1 | tail -3
