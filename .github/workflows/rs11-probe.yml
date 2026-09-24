@@ -60,7 +60,6 @@ jobs:
 
       - name: push-main (GITHUB_TOKEN pushes a commit to main)
         if: inputs.action == 'push-main'
-        permissions: { contents: write }
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
