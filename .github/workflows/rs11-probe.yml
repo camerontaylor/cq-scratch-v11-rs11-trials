@@ -34,11 +34,11 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh api --method POST repos/$GITHUB_REPOSITORY/check-runs \
-            --input - <<JSON
-            {"name": "cq/probe", "status": "completed", "conclusion": "success",
-             "head_sha": "${{ inputs.sha }}",
-             "output": {"title": "probe check", "summary": "GITHUB_TOKEN-created check run"}}
-JSON
+            -f name='cq/probe' -f status=completed -f conclusion=success \
+            -f head_sha='${{ inputs.sha }}' \
+            -F 'output[title]=probe check' \
+            -F 'output[summary]=GITHUB_TOKEN-created check run' \
+            --jq '{id, app: .app.id, name, conclusion, head_sha}'
 
       - name: status-only (commit status, same context name)
         if: inputs.action == 'status-only'
