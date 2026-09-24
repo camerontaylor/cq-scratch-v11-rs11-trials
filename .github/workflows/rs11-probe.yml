@@ -38,7 +38,7 @@ jobs:
             {"name": "cq/probe", "status": "completed", "conclusion": "success",
              "head_sha": "${{ inputs.sha }}",
              "output": {"title": "probe check", "summary": "GITHUB_TOKEN-created check run"}}
-            JSON
+JSON
 
       - name: status-only (commit status, same context name)
         if: inputs.action == 'status-only'
